@@ -7,6 +7,7 @@ import com.savior.literalura.repositories.BookRepository;
 import com.savior.literalura.services.ApiConsumerService;
 import com.savior.literalura.services.DataConverter;
 
+import java.util.DoubleSummaryStatistics;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,9 @@ public class Main {
                 3. Listar autores registrados
                 4. Lista de autores vivos en un determinado año
                 5. Listar libros por idioma
+                6. Top 10 libros más descargados
+                7. Buscar autor por nombre
+                8. Generar reporte de estadísticas
                 0. Salir
                 """;
         do {
@@ -43,6 +47,9 @@ public class Main {
                 case 3 -> listAuthors();
                 case 4 -> listAuthorsByYear();
                 case 5 -> listBooksByLanguage();
+                case 6 -> top10MostDownloadedBooks();
+                case 7 -> searchAuthorByName();
+                case 8 -> statisticsReport();
                 case 0 -> System.exit(0);
                 default -> System.out.println("Opción no válida");
             }
@@ -136,5 +143,47 @@ public class Main {
 
         System.out.println("Libros en " + language + ":");
         books.forEach(this::showBook);
+    }
+
+    private void top10MostDownloadedBooks() {
+        var books = bookrepository.findTop10ByOrderByDownloadCountDesc();
+
+        System.out.println("\n# Top 10 libros más descargados #");
+        books.forEach(this::showBook);
+    }
+
+    private void searchAuthorByName() {
+        System.out.print("\nIntroduce el nombre del autor: ");
+        var name = scanner.nextLine();
+        var author = authorRepository.findByNameIgnoreCaseContaining(name);
+
+        if (author.isEmpty()) {
+            System.out.println("Autor no encontrado");
+            return;
+        }
+
+        System.out.println("Autor encontrado:");
+        System.out.println(author.get());
+    }
+
+    private void statisticsReport() {
+        var books = apiConsumerService.getApiData(API_URL);
+        var dataDTO = dataConverter.convertJsonTo(books, DataDTO.class);
+        var booksList = dataDTO.books().stream()
+                .collect(Collectors.toList());
+
+        DoubleSummaryStatistics statistics = booksList.stream()
+                .mapToDouble(book -> Double.parseDouble(book.downloadCount()))
+                .summaryStatistics();
+
+        System.out.printf("""
+                --------------------------------
+                Total de libros: %d
+                Total de descargas: %.0f
+                Promedio de descargas: %.2f
+                Máximo de descargas: %.0f
+                Mínimo de descargas: %.0f
+                --------------------------------
+                """, statistics.getCount(), statistics.getSum(), statistics.getAverage(), statistics.getMax(), statistics.getMin());
     }
 }

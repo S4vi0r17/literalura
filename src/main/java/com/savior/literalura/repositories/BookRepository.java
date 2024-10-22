@@ -12,4 +12,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     @Query("SELECT b FROM Book b WHERE b.language = :language")
     List<Book> findByLanguage(String language);
+
+    List<Book> findTop10ByOrderByDownloadCountDesc();
 }
