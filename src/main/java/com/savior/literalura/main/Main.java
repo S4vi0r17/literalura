@@ -25,7 +25,7 @@ public class Main {
 
     public void run() {
         var menu = """
-                1. Buscar libro por título
+                \n1. Buscar libro por título
                 2. Listar libros registrados
                 3. Listar autores registrados
                 4. Lista de autores vivos en un determinado año
@@ -50,7 +50,7 @@ public class Main {
     }
 
     private void searchBookByTitle() {
-        System.out.print("Introduce el título del libro: ");
+        System.out.print("\nIntroduce el título del libro: ");
         var title = scanner.nextLine();
         var results = apiConsumerService.getApiData(API_URL + "?search=" + title.replace(" ", "%20"));
         var dataDTO = dataConverter.convertJsonTo(results, DataDTO.class);
@@ -93,23 +93,25 @@ public class Main {
 
     private void listAllBooks() {
         var books = bookrepository.findAll();
-        System.out.println("Libros registrados:");
+        System.out.println("\nLibros registrados:");
         books.forEach(this::showBook);
     }
 
     private void listAuthors() {
         var authors = authorRepository.findAll();
-        System.out.println("Autores registrados:");
+        System.out.println("\nAutores registrados:");
         authors.forEach(System.out::println);
     }
 
     private void listAuthorsByYear() {
-        System.out.print("Introduce el año: ");
+        System.out.print("\nIntroduce el año: ");
         var year = scanner.nextInt();
+
         var authors = authorRepository.findAll().stream()
                 .filter(author -> author.getDeathYear() == null || author.getDeathYear() > year)
                 .collect(Collectors.toList());
-        System.out.println("Autores vivos en " + year + ":");
+
+        System.out.println("\nAutores vivos en " + year + ":");
         authors.forEach(System.out::println);
     }
 
@@ -119,10 +121,13 @@ public class Main {
                 .distinct()
                 .collect(Collectors.toList());
 
-        System.out.println("Idiomas disponibles:");
-        languages.forEach(System.out::println);
+        System.out.println("\n# Idiomas disponibles #");
+        languages.forEach(language -> {
+            var books = bookrepository.findByLanguage(language);
+            System.out.printf("Idioma: %s, Cantidad de libros: %d\n", language, books.size());
+        });
 
-        System.out.print("Introduce el idioma: ");
+        System.out.print("\nIntroduce el idioma: ");
         var language = scanner.nextLine();
 
         var books = bookrepository.findAll().stream()
