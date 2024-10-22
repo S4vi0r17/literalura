@@ -1,7 +1,6 @@
 package com.savior.literalura.main;
 
 import com.savior.literalura.dto.DataDTO;
-import com.savior.literalura.models.Author;
 import com.savior.literalura.models.Book;
 import com.savior.literalura.repositories.AuthorRepository;
 import com.savior.literalura.repositories.BookRepository;
@@ -43,6 +42,7 @@ public class Main {
                 case 2 -> listAllBooks();
                 case 3 -> listAuthors();
                 case 4 -> listAuthorsByYear();
+                case 5 -> listBooksByLanguage();
                 case 0 -> System.exit(0);
                 default -> System.out.println("Opción no válida");
             }
@@ -56,54 +56,80 @@ public class Main {
         var dataDTO = dataConverter.convertJsonTo(results, DataDTO.class);
         var books = dataDTO.books().stream()
                 .map(Book::new)
-                .collect(Collectors.toList());
+                .findFirst();
 
-        books.forEach(book -> {
-            var author = book.getAuthor();
-            var authorOptional = authorRepository.findByNameIgnoreCase(author.getName());
-            if (authorOptional.isPresent()) {
-                book.setAuthor(authorOptional.get());
-            } else {
-                authorRepository.save(author);
-            }
-            var bookOptional = bookrepository.findByTitleIgnoreCase(book.getTitle());
-            if (bookOptional.isPresent()) {
-                System.out.println("El libro ya está registrado");
-            } else {
-                bookrepository.save(book);
-            }
-        });
+        if (books.isEmpty()) {
+            System.out.println("Libro no encontrado");
+            return;
+        }
 
-        System.out.println("Libros encontrados:");
-        System.out.println(books);
+        showBook(books.get());
+
+        authorRepository.findByNameIgnoreCase(books.get().getAuthor().getName())
+                .ifPresentOrElse(author -> {
+                    books.get().setAuthor(author);
+                }, () -> {
+                    authorRepository.save(books.get().getAuthor());
+                });
+
+        bookrepository.findByTitleIgnoreCase(books.get().getTitle())
+                .ifPresentOrElse(book -> {
+                    System.out.println("El libro ya está registrado");
+                }, () -> {
+                    bookrepository.save(books.get());
+                });
+    }
+
+    private void showBook(Book book) {
+        System.out.printf("""
+                --------------------------------
+                Título: %s
+                Autor: %s
+                Idioma: %s
+                Descargas: %s
+                --------------------------------
+                """, book.getTitle(), book.getAuthor().getName(), book.getLanguage(), book.getDownloadCount());
     }
 
     private void listAllBooks() {
-        var results = apiConsumerService.getApiData(API_URL);
-        var dataDTO = dataConverter.convertJsonTo(results, DataDTO.class);
-        System.out.println(dataDTO.books());
+        var books = bookrepository.findAll();
+        System.out.println("Libros registrados:");
+        books.forEach(this::showBook);
     }
 
     private void listAuthors() {
-        var results = apiConsumerService.getApiData(API_URL);
-        var dataDTO = dataConverter.convertJsonTo(results, DataDTO.class);
-        var authors = dataDTO.books().stream()
-                .flatMap(book -> book.authors().stream()
-                        .map(Author::new))
-                .toList();
+        var authors = authorRepository.findAll();
+        System.out.println("Autores registrados:");
         authors.forEach(System.out::println);
-        authors.forEach(authorRepository::save);
     }
 
     private void listAuthorsByYear() {
         System.out.print("Introduce el año: ");
         var year = scanner.nextInt();
-        var results = apiConsumerService.getApiData(API_URL);
-        var dataDTO = dataConverter.convertJsonTo(results, DataDTO.class);
-        dataDTO.books().stream()
-                .map(book -> book.authors())
-                .filter(authors -> authors.stream()
-                        .anyMatch(author -> author.deathYear() == null || author.deathYear() > year))
-                .forEach(System.out::println);
+        var authors = authorRepository.findAll().stream()
+                .filter(author -> author.getDeathYear() == null || author.getDeathYear() > year)
+                .collect(Collectors.toList());
+        System.out.println("Autores vivos en " + year + ":");
+        authors.forEach(System.out::println);
+    }
+
+    private void listBooksByLanguage() {
+        var languages = bookrepository.findAll().stream()
+                .map(Book::getLanguage)
+                .distinct()
+                .collect(Collectors.toList());
+
+        System.out.println("Idiomas disponibles:");
+        languages.forEach(System.out::println);
+
+        System.out.print("Introduce el idioma: ");
+        var language = scanner.nextLine();
+
+        var books = bookrepository.findAll().stream()
+                .filter(book -> book.getLanguage().equalsIgnoreCase(language))
+                .collect(Collectors.toList());
+
+        System.out.println("Libros en " + language + ":");
+        books.forEach(this::showBook);
     }
 }

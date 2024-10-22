@@ -75,7 +75,6 @@ public class Author {
                 ", name='" + name + '\'' +
                 ", birthYear=" + birthYear +
                 ", deathYear=" + deathYear +
-                ", books=" + books +
                 '}';
     }
 }
