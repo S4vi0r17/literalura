@@ -1,7 +1,7 @@
 package com.savior.literalura;
 
-import com.savior.literalura.dto.BookDTO;
 import com.savior.literalura.dto.DataDTO;
+import com.savior.literalura.main.Main;
 import com.savior.literalura.services.ApiConsumerService;
 import com.savior.literalura.services.DataConverter;
 import org.springframework.boot.CommandLineRunner;
@@ -17,9 +17,7 @@ public class LiteraluraApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		ApiConsumerService apiConsumerService = new ApiConsumerService();
-		DataConverter dataConverter = new DataConverter();
-		var json = apiConsumerService.getApiData("https://gutendex.com/books");
-		System.out.println(json);
+		Main main = new Main();
+		main.run();
 	}
 }

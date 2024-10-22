@@ -13,7 +13,8 @@ public class Author {
 
     private String name;
     private Long birthYear;
+    private Long deathYear;
 
-    @ManyToMany(mappedBy = "authors")
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Book> books;
 }

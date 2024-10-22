@@ -13,14 +13,9 @@ public class Book {
 
     private String title;
 
-    @ManyToMany
-    @JoinTable(
-            name = "book_authors",
-            joinColumns = @JoinColumn(name = "book_id"), // Columna para esta entidad
-            inverseJoinColumns = @JoinColumn(name = "author_id") // Columna para la otra entidad
-    )
-    private List<Author> authors;
+    @ManyToOne
+    private Author author;
 
-    private List<String> languages;
+    private String language;
     private String downloadCount;
 }
